@@ -58,6 +58,9 @@
             document.getElementById("information").innerHTML=response.data.username
         }
         getinfo()
+        function logout(){
+            localStorage.removeItem("item");
+        }
     </script>
 </body>
 </html>

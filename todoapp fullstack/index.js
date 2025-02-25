@@ -92,7 +92,7 @@ app.post('/signin',(req,res)=>{
 })
 app.get('/me',auth,(req,res)=>{
     const currentuser=req.username
-    let user=users.find(user=>user.username===currentuser   )
+    let user=users.find(user=>user.username===currentuser)
     if(user){
         res.json({
             username:user.username,
