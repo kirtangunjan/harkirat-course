@@ -1,3 +1,4 @@
+const bcrypt=require('bcrypt')
 const express=require('express');
 const jwt=require('jsonwebtoken');
 const {UserModel,TodoModel}=require('./db');
@@ -18,9 +19,11 @@ app.post('/sign-up', async (req,res)=>{
     const password=req.body.password
     const name=req.body.name
     
+    const hashedpassword=await bcrypt.hash(password,5)
+
     const user=await UserModel.create({
         email:email,
-        password:password,
+        password:hashedpassword,
         name:name
     });
 
@@ -35,9 +38,15 @@ app.post('/sign-in',async (req,res)=>{
 
     const user= await UserModel.findOne({
         email:email,
-        password:password
     });
-    if(user){
+    if(!user){
+        res.status(403).json({
+            message:"user not found"
+        })
+    }
+    const passwordMatch=await bcrypt.compare(password,user.password)
+
+    if(passwordMatch){
         const token=jwt.sign({
             id:user._id.toString()
         },JWT_SECRET);
@@ -56,7 +65,8 @@ app.post('/todo',auth,async(req,res)=>{
     const userId=req.userId;
     const title=req.body.title;
     await TodoModel.create({
-        userId
+        userId,
+        title
     })
     res.json({
         message:'todo created'
@@ -93,3 +103,4 @@ function auth(req,res,next){
 }
 
 app.listen(3000);
+
