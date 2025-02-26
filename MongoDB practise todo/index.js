@@ -6,6 +6,10 @@ const { default: mongoose } = require('mongoose');
 const JWT_SECRET='keyiskey';
 const app=express();
 mongoose.connect("mongodb://127.0.0.1:27017/todos-fullstack-practise");
+const {z}=require('zod')
+
+
+
 
 //middlewares
 app.use(express.json());
@@ -15,21 +19,50 @@ app.use(express.json());
 
 //auth routes 
 app.post('/sign-up', async (req,res)=>{
+    const requireBody=z.object({
+        email:z.string().min(10).max(100),
+        name:z.string().min(10).max(100),
+        password:z.string().min(3).max(30)
+    })
+
+    const parsedDatawithsuccess=requireBody.safeParse(req.body)
+
+
+    //how to show exect password
+    if(!parsedDatawithsuccess.success){
+        res.json({
+            message:'incorrect formate',
+            error:parsedDatawithsuccess.error
+        })
+        return
+    }
     const email=req.body.email;
     const password=req.body.password
     const name=req.body.name
     
-    const hashedpassword=await bcrypt.hash(password,5)
 
-    const user=await UserModel.create({
-        email:email,
-        password:hashedpassword,
-        name:name
-    });
+    let errorthrown=false;
+    try{
+        const hashedpassword=await bcrypt.hash(password,5)
 
-    res.json({
-        message:'you are logged-in'
-    });
+        const user=await UserModel.create({
+            email:email,
+            password:hashedpassword,
+            name:name
+        });
+        throw new Error('user already')
+    }catch(e){
+        res.json({
+            message:"User already exists"
+        })
+        errorthrown=true;
+    }
+    if(!errorthrown){
+        res.json({
+            message:'you are logged-in'
+        }); 
+    }
+    
 });
 
 app.post('/sign-in',async (req,res)=>{
